@@ -1,0 +1,31 @@
+feature,importance
+gpa_sem2,0.797053194234228
+gpa_sem1,0.7945516650128066
+exam_score,0.0008464005475770968
+at_risk,0.0003973308575518776
+department_Educational Management,0.00012964566153453414
+avg_course_score,9.446052517516749e-05
+department_Computer Science,7.128421614230344e-05
+department_Business Education,6.708903546067352e-05
+department_Yoruba Education,5.0258139861994e-05
+department_Physics,4.903137289492026e-05
+department_English Language,4.649252587049592e-05
+department_Mathematics,4.421955108931078e-05
+department_Biology,3.864886072776321e-05
+ca2,2.7892008727331517e-05
+department_Guidance and Counselling,2.114420112784012e-05
+level_100,2.0773084899726883e-05
+attendance,2.0369758440953522e-05
+study_hours,2.0040809251255557e-05
+level_200,1.9062960360776097e-05
+num_courses,1.835438878886499e-05
+department_Political Science,1.6962906370260723e-05
+department_History,1.3118888823374209e-05
+assignment_score,8.32692140332463e-06
+level_300,7.262084797119679e-06
+department_Geography,6.066605389466229e-06
+department_Chemistry,6.005806880348132e-06
+level_400,5.551960972733859e-06
+department_Early Childhood Education,2.9908297425132252e-06
+department_Economics,5.123143874373856e-07
+ca1,2.3605374174401327e-07

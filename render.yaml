@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: performance-website-api
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt && python src/train.py --tune --tune-iter 25 --strict-risk --no-shap --no-plots
+    startCommand: uvicorn src.app_api:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+
+  - type: web
+    name: performance-website
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: streamlit run src/app_streamlit.py --server.port $PORT --server.address 0.0.0.0 --server.headless true
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: API_URL
+        value: https://performance-website-api.onrender.com

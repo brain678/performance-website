@@ -1,0 +1,27 @@
+feature,importance
+exam_score,0.9110026783593729
+attendance,0.02011588859015879
+ca2,0.01994402344907411
+assignment_score,0.011008259184741832
+ca1,0.009739022050087582
+department_Chemistry,0.006888978289155563
+department_Political Science,0.005511892688353083
+department_Yoruba Education,0.004040375416670226
+department_Early Childhood Education,0.003552023772463585
+study_hours,0.0028041460861851246
+level_100,0.0022994561722356715
+department_Guidance and Counselling,0.0009290250077941673
+num_courses,0.0005854230610840269
+level_300,0.0004889872609436228
+department_Geography,0.00030271338827680874
+department_Computer Science,0.0002710552491241655
+department_Educational Management,0.00017912238862940853
+department_Economics,0.00015724183545231735
+level_400,0.0001505081374643519
+level_200,1.4948509626512269e-05
+department_Biology,1.2866106188485371e-05
+department_Mathematics,1.3649969176453703e-06
+department_Business Education,0.0
+department_Physics,0.0
+department_History,0.0
+department_English Language,0.0
