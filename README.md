@@ -79,10 +79,22 @@ Predict risk only:
 python src/predict.py --input Dataset.csv --output predictions.csv --predict risk
 ```
 
-Save only at-risk students:
+Use a single model family for both risk and performance (default is random_forest):
+
+```bash
+python src/predict.py --input Dataset.csv --output predictions.csv --model-family random_forest
+```
+
+Save only at-risk students (default):
 
 ```bash
 python src/predict.py --input Dataset.csv --output at_risk_only.csv --predict risk --only-at-risk
+```
+
+Output all rows:
+
+```bash
+python src/predict.py --input Dataset.csv --output predictions.csv --predict risk --include-all
 ```
 
 ## API Service (FastAPI)

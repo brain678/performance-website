@@ -124,5 +124,21 @@
     "low",
     "medium",
     "high"
-  ]
+  ],
+  "risk_models": [
+    "logistic_regression",
+    "decision_tree",
+    "random_forest",
+    "gradient_boosting",
+    "svm"
+  ],
+  "performance_models": [
+    "ridge",
+    "decision_tree",
+    "random_forest",
+    "gradient_boosting",
+    "svr"
+  ],
+  "risk_default_model": "gradient_boosting",
+  "performance_default_model": "ridge"
 }

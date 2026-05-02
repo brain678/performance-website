@@ -13,6 +13,8 @@ from sklearn.ensemble import (
     RandomForestClassifier,
     RandomForestRegressor,
 )
+from sklearn.svm import SVC, SVR
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.linear_model import LogisticRegression, Ridge
 from sklearn.metrics import (
     ConfusionMatrixDisplay,
@@ -85,22 +87,44 @@ def build_candidates(task):
                 solver="liblinear",
                 random_state=RANDOM_STATE,
             ),
+            "decision_tree": DecisionTreeClassifier(
+                random_state=RANDOM_STATE,
+                class_weight="balanced",
+            ),
             "random_forest": RandomForestClassifier(
                 n_estimators=300,
                 random_state=RANDOM_STATE,
                 class_weight="balanced",
             ),
             "gradient_boosting": GradientBoostingClassifier(random_state=RANDOM_STATE),
+            "svm": SVC(
+                kernel="rbf",
+                probability=True,
+                class_weight="balanced",
+                random_state=RANDOM_STATE,
+            ),
         }
 
     return {
         "ridge": Ridge(),
+        "decision_tree": DecisionTreeRegressor(random_state=RANDOM_STATE),
         "random_forest": RandomForestRegressor(
             n_estimators=300,
             random_state=RANDOM_STATE,
         ),
         "gradient_boosting": GradientBoostingRegressor(random_state=RANDOM_STATE),
+        "svr": SVR(kernel="rbf"),
     }
+
+
+def save_candidate_models(X, y, cat_cols, num_cols, task, output_dir, prefix):
+    candidates = build_candidates(task)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    for name, model in candidates.items():
+        pipeline = build_pipeline(cat_cols, num_cols, model)
+        pipeline.fit(X, y)
+        joblib.dump(pipeline, output_dir / f"{prefix}_model_{name}.pkl")
+    return list(candidates.keys())
 
 
 def get_param_distributions(model):
@@ -135,6 +159,31 @@ def get_param_distributions(model):
             "model__learning_rate": [0.05, 0.1, 0.2],
             "model__max_depth": [2, 3, 4],
             "model__subsample": [0.7, 0.9, 1.0],
+        }
+    if isinstance(model, DecisionTreeClassifier):
+        return {
+            "model__max_depth": [None, 5, 10, 20],
+            "model__min_samples_split": [2, 4, 6],
+            "model__min_samples_leaf": [1, 2, 4],
+        }
+    if isinstance(model, DecisionTreeRegressor):
+        return {
+            "model__max_depth": [None, 5, 10, 20],
+            "model__min_samples_split": [2, 4, 6],
+            "model__min_samples_leaf": [1, 2, 4],
+        }
+    if isinstance(model, SVC):
+        return {
+            "model__C": [0.1, 1.0, 5.0, 10.0],
+            "model__kernel": ["rbf", "linear"],
+            "model__gamma": ["scale", "auto"],
+        }
+    if isinstance(model, SVR):
+        return {
+            "model__C": [0.1, 1.0, 5.0, 10.0],
+            "model__epsilon": [0.01, 0.1, 0.2],
+            "model__kernel": ["rbf", "linear"],
+            "model__gamma": ["scale", "auto"],
         }
     if isinstance(model, LogisticRegression):
         return {
@@ -364,6 +413,20 @@ def main():
         action="store_true",
         help="Use stricter leakage controls and group-based split for risk model",
     )
+    risk_model_choices = ["best"] + list(build_candidates("classification").keys())
+    perf_model_choices = ["best"] + list(build_candidates("regression").keys())
+    parser.add_argument(
+        "--risk-model",
+        choices=risk_model_choices,
+        default="best",
+        help="Select which risk model to train and save",
+    )
+    parser.add_argument(
+        "--performance-model",
+        choices=perf_model_choices,
+        default="best",
+        help="Select which performance model to train and save",
+    )
     args = parser.parse_args()
 
     sns.set_theme(style="whitegrid")
@@ -442,6 +505,16 @@ def main():
         "regression",
         args.cv_folds,
     )
+
+    if args.risk_model != "best":
+        risk_candidates = build_candidates("classification")
+        risk_best_name = args.risk_model
+        risk_best_model = risk_candidates[risk_best_name]
+
+    if args.performance_model != "best":
+        perf_candidates = build_candidates("regression")
+        perf_best_name = args.performance_model
+        perf_best_model = perf_candidates[perf_best_name]
 
     risk_tuning = {"enabled": False}
     perf_tuning = {"enabled": False}
@@ -528,9 +601,29 @@ def main():
     artifacts_dir.mkdir(parents=True, exist_ok=True)
     plots_dir = artifacts_dir / PLOTS_DIR_NAME
     plots_dir.mkdir(parents=True, exist_ok=True)
+    models_dir = artifacts_dir / "models"
 
     joblib.dump(risk_model, artifacts_dir / "risk_model.pkl")
     joblib.dump(perf_model, artifacts_dir / "performance_model.pkl")
+
+    risk_model_names = save_candidate_models(
+        X_risk_fit,
+        y_risk_fit,
+        risk_cat_cols,
+        risk_num_cols,
+        "classification",
+        models_dir,
+        "risk",
+    )
+    perf_model_names = save_candidate_models(
+        X_perf_train,
+        y_perf_train,
+        perf_cat_cols,
+        perf_num_cols,
+        "regression",
+        models_dir,
+        "performance",
+    )
 
     risk_encoded_features = get_feature_names(risk_model.named_steps["preprocessor"])
     perf_encoded_features = get_feature_names(perf_model.named_steps["preprocessor"])
@@ -547,6 +640,10 @@ def main():
         "risk_threshold": risk_threshold,
         "risk_tier_thresholds": RISK_TIER_THRESHOLDS,
         "risk_tier_labels": RISK_TIER_LABELS,
+        "risk_models": risk_model_names,
+        "performance_models": perf_model_names,
+        "risk_default_model": risk_best_name,
+        "performance_default_model": perf_best_name,
     }
     (artifacts_dir / "feature_schema.json").write_text(json.dumps(schema, indent=2))
 

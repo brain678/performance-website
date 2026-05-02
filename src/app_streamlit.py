@@ -268,6 +268,11 @@ with st.sidebar:
             st.error(f"API health check error: {exc}")
 
 predict_choice = st.selectbox("Prediction type", ["risk", "both", "performance"])
+model_family = st.selectbox(
+    "Model family",
+    ["linear", "decision_tree", "random_forest", "gradient_boosting", "svm"],
+)
+st.caption("Using the selected model family for both risk and performance.")
 show_only_at_risk = st.checkbox("Show only at-risk students", value=True)
 
 uploaded_file = st.file_uploader("Upload CSV", type=["csv"])
@@ -292,7 +297,13 @@ if uploaded_file:
     if st.button("Run predictions"):
         try:
             records = json.loads(df.to_json(orient="records"))
-            payload = {"records": records, "predict": "both"}
+            payload = {
+                "records": records,
+                "predict": "both",
+                "model_family": model_family,
+                "risk_model": None,
+                "performance_model": None,
+            }
             response = requests.post(
                 f"{api_url}/predict",
                 json=payload,

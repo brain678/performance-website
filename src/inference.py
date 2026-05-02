@@ -23,11 +23,14 @@ def load_schema(artifacts_dir):
     return json.loads(schema_path.read_text())
 
 
-def load_models(artifacts_dir):
+def load_named_model(artifacts_dir, model_type, model_name):
     artifacts_dir = Path(artifacts_dir)
-    risk_model = joblib.load(artifacts_dir / "risk_model.pkl")
-    perf_model = joblib.load(artifacts_dir / "performance_model.pkl")
-    return risk_model, perf_model
+    if not model_name or model_name == "default":
+        return joblib.load(artifacts_dir / f"{model_type}_model.pkl")
+    model_path = artifacts_dir / "models" / f"{model_type}_model_{model_name}.pkl"
+    if not model_path.exists():
+        raise FileNotFoundError(f"Model not found: {model_path}")
+    return joblib.load(model_path)
 
 
 def prepare_features(df, feature_cols, cat_cols, num_cols):
@@ -44,14 +47,15 @@ def build_risk_tiers(scores, thresholds, labels):
     return np.where(scores < low_t, labels[0], np.where(scores < med_t, labels[1], labels[2]))
 
 
-def predict_dataframe(df, artifacts_dir, predict="both"):
+def predict_dataframe(df, artifacts_dir, predict="both", risk_model_name=None, perf_model_name=None):
     schema = load_schema(artifacts_dir)
     output = df.copy()
     risk_model = None
     perf_model = None
 
     if predict in {"risk", "performance", "both"}:
-        risk_model, perf_model = load_models(artifacts_dir)
+        risk_model = load_named_model(artifacts_dir, "risk", risk_model_name)
+        perf_model = load_named_model(artifacts_dir, "performance", perf_model_name)
 
     if predict in {"risk", "both"}:
         risk_features = schema["risk_features"]
